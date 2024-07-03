@@ -2,8 +2,8 @@ import puppeteer from "puppeteer";
 
 import Resp from "../classes/resp";
 import { colors } from "../util/colors";
-import { delay } from "../util/common";
-import { TIMEOUT } from "../main";
+import { MAX_TIMEOUT } from "../main";
+import type { MsgContext } from "../util/types";
 
 export const chat = {
 	kick,
@@ -15,29 +15,32 @@ async function kick(streamer: string) {
 	const res = new Resp();
 
 	const browser = await puppeteer.launch({
-		headless: false, 
 		slowMo: 160,
 	});
 
-
 	const page = await browser.newPage();
-	page.setDefaultTimeout(TIMEOUT);
+	await page.setUserAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36");
+	page.setDefaultTimeout(MAX_TIMEOUT);
 
 	try {
 		const site = `https://kick.com/${streamer}/chatroom`;
 
-		await page.goto(site);
+		await page.goto(site, {
+			waitUntil: "networkidle2"
+		});
 		await page.setViewport({width: 1080, height: 1024});
 
-		await page.waitForSelector(".chat-entry > div");
-		await delay(8000);
-		const messages = await page.$$eval(".chat-entry > div", (opts) => {
-			return opts.map((opt) => ({
-				username: opt.getElementsByClassName("chat-entry-username").item(0)?.innerHTML ?? "",
-				text: opt.getElementsByClassName("chat-entry-content").item(0)?.innerHTML,
-				emote: opt.getElementsByClassName("chat-emote-container").item(0)?.getElementsByTagName("div").item(0)?.innerHTML
-			}));
-		});
+
+		let messages: MsgContext[] = [];
+		while (messages.length < 30) {
+			messages = await page.$$eval(".chat-entry > div", (opts) => {
+				return opts.map((opt) => ({
+					username: opt.getElementsByClassName("chat-entry-username").item(0)?.innerHTML ?? "",
+					text: opt.getElementsByClassName("chat-entry-content").item(0)?.innerHTML,
+					emote: opt.getElementsByClassName("chat-emote-container").item(0)?.getElementsByTagName("div").item(0)?.innerHTML
+				}));
+			});
+		}
 
 		res.setMsgs(messages);
 	} catch (e: any) {
@@ -52,5 +55,5 @@ async function kick(streamer: string) {
 	return res.build();
 }
 
-async function twitch(url: URL) {}
-async function youtube(url: URL) {}
+async function twitch() {}
+async function youtube() {}

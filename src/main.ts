@@ -5,16 +5,17 @@ import { colors } from "./util/colors";
 const PORT: number = process.env.PORT 
 	? Number(process.env.PORT)
 	: 8080 as const;
-export const TIMEOUT: number = 10_000 as const;
+export const MAX_TIMEOUT: number = 10_000 as const;
 
 const server = Bun.serve({
-	hostname: "localhost",
+	hostname: "0.0.0.0",
 	port: PORT,
-	async fetch(req) {
+	async fetch(req, server) {
 		const url = new URL(req.url);
+		const ip = server.requestIP(req);
 		const [_, platform, action, ...actionArgs] = url.pathname.split("/");
 
-		console.log(`${colors.blue}${req.method}${colors.reset} - ${colors.bold}${url.pathname}${colors.reset}`);
+		console.log(`${colors.blue}${req.method}${colors.reset} - ${colors.bold}${url.pathname}${colors.reset}\t\t:${ip?.address}`);
 
 		switch(platform) {
 		case "kick":
