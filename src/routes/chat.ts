@@ -2,7 +2,7 @@ import puppeteer from "puppeteer";
 
 import Resp from "../classes/resp";
 import { colors } from "../util/colors";
-import { MAX_TIMEOUT } from "../main";
+import { LAUNCH_CONFIG, MAX_TIMEOUT } from "../main";
 import type { MsgContext } from "../util/types";
 
 export const chat = {
@@ -14,9 +14,7 @@ export const chat = {
 async function kick(streamer: string) {
 	const res = new Resp();
 
-	const browser = await puppeteer.launch({
-		slowMo: 160,
-	});
+	const browser = await puppeteer.launch(LAUNCH_CONFIG);
 
 	const page = await browser.newPage();
 	await page.setUserAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36");
@@ -28,8 +26,6 @@ async function kick(streamer: string) {
 		await page.goto(site, {
 			waitUntil: "networkidle2"
 		});
-		await page.setViewport({width: 1080, height: 1024});
-
 
 		let messages: MsgContext[] = [];
 		while (messages.length < 10) {
