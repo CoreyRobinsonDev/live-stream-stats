@@ -1,3 +1,4 @@
+import { colors } from "../util/colors";
 import type { MsgContext } from "../util/types";
 
 export default class Resp {
@@ -37,6 +38,11 @@ export default class Resp {
 	}
 
 	build() {
+		if (this.#status === 200) {
+			console.log(`${colors.green}SUCCESS${colors.reset} - ${colors.bold}${this.#info}${colors.reset}`);
+		} else {
+			console.error(`${colors.red}ERROR${colors.reset} - ${colors.bold}${this.#info}${colors.reset}`);
+		}
 		return Response.json(
 			{ 
 				status: this.#status,

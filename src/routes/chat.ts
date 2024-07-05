@@ -22,10 +22,16 @@ async function kick(streamer: string) {
 
 	try {
 		const site = `https://kick.com/${streamer}/chatroom`;
-
 		await page.goto(site, {
 			waitUntil: "networkidle2"
 		});
+
+		if (await page.$(".chat-entry > div") === null) {
+			return res
+				.setStatus(404)
+				.setInfo(`Streamer ${streamer} Not Found`)
+				.build();
+		};
 
 		let messages: MsgContext[] = [];
 		while (messages.length < 10) {
@@ -44,11 +50,11 @@ async function kick(streamer: string) {
 		await browser.close();
 		return res
 			.setStatus(500)
-			.setInfo(e.message)
+			.setInfo("Unhandled Server Error")
 			.build();
 	}
 	await browser.close();
-	return res.build();
+	return res.setInfo("Successful Query").build();
 }
 
 async function twitch() {}
