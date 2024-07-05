@@ -39,7 +39,9 @@ export default class Resp {
 	build() {
 		return Response.json(
 			{ 
+				status: this.#status,
 				info: this.#info,
+				numberOfMessages: this.#messages?.length,
 				messages: this.#messages
 			},
 			{ status: this.#status }

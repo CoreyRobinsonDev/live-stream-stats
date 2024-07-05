@@ -32,7 +32,7 @@ async function kick(streamer: string) {
 
 
 		let messages: MsgContext[] = [];
-		while (messages.length < 30) {
+		while (messages.length < 10) {
 			messages = await page.$$eval(".chat-entry > div", (opts) => {
 				return opts.map((opt) => ({
 					username: opt.getElementsByClassName("chat-entry-username").item(0)?.innerHTML ?? "",
