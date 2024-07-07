@@ -41,7 +41,7 @@ export default class Resp {
 		if (this.#status === 200) {
 			console.log(`${colors.green}SUCCESS${colors.reset} - ${colors.bold}${this.#info}${colors.reset}`);
 		} else {
-			console.error(`${colors.red}ERROR${colors.reset} - ${colors.bold}${this.#info}${colors.reset}`);
+			console.log(`${colors.red}ERROR${colors.reset} - ${colors.bold}${this.#info}${colors.reset}`);
 		}
 		return Response.json(
 			{ 

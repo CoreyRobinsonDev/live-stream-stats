@@ -1,9 +1,6 @@
-import puppeteer from "puppeteer";
-
-import Resp from "../classes/resp";
 import { colors } from "../util/colors";
-import { LAUNCH_CONFIG, MAX_TIMEOUT } from "../main";
-import type { MsgContext } from "../util/types";
+import { StatusCode, type MsgContext } from "../util/types";
+import type { Page } from "puppeteer";
 
 export const chat = {
 	kick,
@@ -11,50 +8,28 @@ export const chat = {
 	youtube
 }
 
-async function kick(streamer: string) {
-	const res = new Resp();
-
-	const browser = await puppeteer.launch(LAUNCH_CONFIG);
-
-	const page = await browser.newPage();
-	await page.setUserAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36");
-	page.setDefaultTimeout(MAX_TIMEOUT);
+async function kick(page: Page): Promise<[MsgContext[], StatusCode | undefined]> {
+	if (await page.$(".chat-entry > div") === null) {
+		return [[], StatusCode.NotFound]; 
+	};
 
 	try {
-		const site = `https://kick.com/${streamer}/chatroom`;
-		await page.goto(site, {
-			waitUntil: "networkidle2"
+		let messages: MsgContext[] = await page.$$eval(".chat-entry > div", (opts) => {
+			return opts.map((opt) => ({
+				// badges: opt.getElementsByClassName("chat-message-identity")
+				// 	.item(0)
+				// 	?.getElementsByTagName("svg"),
+				username: opt.getElementsByClassName("chat-entry-username").item(0)?.innerHTML ?? "",
+				text: opt.getElementsByClassName("chat-entry-content").item(0)?.innerHTML,
+				emote: opt.getElementsByClassName("chat-emote-container").item(0)?.getElementsByTagName("div").item(0)?.innerHTML
+			}));
 		});
 
-		if (await page.$(".chat-entry > div") === null) {
-			return res
-				.setStatus(404)
-				.setInfo(`Streamer ${streamer} Not Found`)
-				.build();
-		};
-
-		let messages: MsgContext[] = [];
-		while (messages.length < 10) {
-			messages = await page.$$eval(".chat-entry > div", (opts) => {
-				return opts.map((opt) => ({
-					username: opt.getElementsByClassName("chat-entry-username").item(0)?.innerHTML ?? "",
-					text: opt.getElementsByClassName("chat-entry-content").item(0)?.innerHTML,
-					emote: opt.getElementsByClassName("chat-emote-container").item(0)?.getElementsByTagName("div").item(0)?.innerHTML
-				}));
-			});
-		}
-
-		res.setMsgs(messages);
+		return [messages, undefined]; 
 	} catch (e: any) {
 		console.error(`${colors.red}ERROR${colors.reset} - ${colors.bold}${e.message}${colors.reset}`);
-		await browser.close();
-		return res
-			.setStatus(500)
-			.setInfo("Unhandled Server Error")
-			.build();
+		return [[], StatusCode.ServerError]; 
 	}
-	await browser.close();
-	return res.setInfo("Successful Query").build();
 }
 
 async function twitch() {}

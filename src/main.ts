@@ -1,40 +1,102 @@
+import type { ServerWebSocket } from "bun";
 import Resp from "./classes/resp";
 import { chat } from "./routes/chat";
 import { colors } from "./util/colors";
+import { StatusCode, type WebSocketData } from "./util/types";
+import { goto } from "./util/common";
 
+export let channels = new Map<string, number[]>();
+const idRange = 1_000_000;
 const PORT: number = process.env.PORT 
 	? Number(process.env.PORT)
 	: 8080 as const;
-export const MAX_TIMEOUT: number = 10_000 as const;
-export const LAUNCH_CONFIG = {
-	args: ["--no-sandbox", "--disable-setuid-sandbox"],
-	defaultViewport: { width: 1980, height: 1024 },
-	slowMo: 100,
-};
 
-const server = Bun.serve({
+const server = Bun.serve<WebSocketData>({
 	hostname: "0.0.0.0",
 	port: PORT,
 	async fetch(req, server) {
 		const url = new URL(req.url);
-		const ip = server.requestIP(req);
-		const [_, platform, action, ...actionArgs] = url.pathname.split("/");
+		const [_, platform, streamer, action] = url.pathname.split("/");
+		return server.upgrade(req, {
+			data: {
+				id: Math.floor(Math.random() * idRange),
+				ip: server.requestIP(req)?.address,
+				channelId: url.pathname,
+				platform,
+				action,
+				streamer
+			}
+		}) ? undefined : new Resp(500, "WebSocket Upgrade Failed").build();
+	},
+	websocket: {
+		perMessageDeflate: true,
+		async open(req) {
+			console.log(`${colors.yellow}${req.data.id}${colors.reset} - ${colors.bold}${req.data.channelId}${colors.reset}`);
 
-		console.log(`${colors.yellow}${req.method}${colors.reset} - ${colors.bold}${url.pathname}${colors.reset}\t\t:${ip?.address}`);
+			req.subscribe(req.data.channelId);
+			if (channels.has(req.data.channelId)) {
+				channels.get(req.data.channelId)!.push(req.data.id);
+			} else {
+				channels.set(req.data.channelId, [req.data.id]);
+			}
+			for (const [channel, ids] of channels.entries()) {
+				console.log(`${channel}: ${ids.length}`);
+			}
+			switch(req.data.platform) {
+			case "kick":
+				switch(req.data.action) {
+				case "chat":
+					if (channels.get(req.data.channelId)!.length > 1) {
+					}
+					const site = `https://kick.com/${req.data.streamer}/chatroom`;
+					const [browser, page] = await goto(site);
 
-		switch(platform) {
-		case "kick":
-			switch(action) {
-			case "chat":
-				return await chat.kick(actionArgs[0]);
+					while (channels.has(req.data.channelId)) {
+						let [msg, err] = await chat.kick(page);
+						if (err) {
+							switch (err) {
+							case StatusCode.NotFound:
+								console.error(`${colors.yellow}${req.data.id}${colors.reset} - ${colors.red}ERROR${colors.reset} - ${colors.bold}"${req.data.streamer}" Not Found or Offline${colors.reset}`);
+								req.close(StatusCode.NotFound, `Streamer ${req.data.streamer} Not Found or Offline`);
+								break;
+							default:
+								console.error(`${colors.yellow}${req.data.id}${colors.reset} - ${colors.red}ERROR${colors.reset} - ${colors.bold}Unexpected Server Error${colors.reset}`);
+								req.close(StatusCode.ServerError, "Unexpected Server Error");
+							}	
+							break;
+						}
+						server.publish(req.data.channelId, JSON.stringify(msg));
+					}
+					browser.close();
+					break;
+				default:
+					console.error(`${colors.yellow}${req.data.id}${colors.reset} - ${colors.red}ERROR${colors.reset} - ${colors.bold}Invalid Action${colors.reset}`);
+					req.close(StatusCode.BadRequest, "Invalid Action");
+				}	
+				break;
+			case "twitch": break;
+			case "youtube": break;
 			default:
-				return new Resp(400, "Invalid action").build();
-			}	
-		case "twitch":
-		case "youtube":
-		default:
-			return new Resp(400, "Invalid platform").build();
-
+				console.error(`${colors.yellow}${req.data.id}${colors.reset} - ${colors.red}ERROR${colors.reset} - ${colors.bold}Invalid Platform${colors.reset}`);
+				req.close(StatusCode.BadRequest, "Invalid Platform");
+			}
+		},
+		message(req) {
+			req.close();
+		},
+		close(req) {
+			req.unsubscribe(req.data.channelId);
+			channels.set(
+				req.data.channelId,
+				channels
+					.get(req.data.channelId)!
+					.filter((id) => id !== req.data.id)
+			);
+			for (const [channel, ids] of channels.entries()) {
+				console.log(`${channel}: ${ids.length}`);
+			}
+			if (channels.get(req.data.channelId)?.length === 0) 
+				channels.delete(req.data.channelId);
 		}
 	}
 })
