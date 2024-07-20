@@ -1,11 +1,12 @@
-export type MsgContext = {
+export type Message = {
+    id: string,
     badges?: string[],
     username: string,
     text?: string,
     emote?: string
 }
 
-export type WebSocketData = {
+export type User = {
     id: number,
     ip: string,
     channelId: string,
@@ -20,4 +21,3 @@ export enum StatusCode {
     BadRequest = 4000,
     NotFound = 4001,
 }
-

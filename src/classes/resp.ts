@@ -1,11 +1,11 @@
 import { colors } from "../util/colors";
-import type { MsgContext } from "../util/types";
+import type { Message } from "../util/types";
 
 export default class Resp {
 	#info = "";
 	#status = 200;
-	#messages: MsgContext[] | undefined; 
-	constructor(status?: number, info?: string, messages?: MsgContext[]) {
+	#messages: Message[] | undefined; 
+	constructor(status?: number, info?: string, messages?: Message[]) {
 		if (status) this.#status = status;
 		if (info) this.#info = info;
 		if (messages) this.#messages = messages;
@@ -22,7 +22,7 @@ export default class Resp {
 		return this;
 	}
 
-	setMsgs(msgs: MsgContext[]) {
+	setMsgs(msgs: Message[]) {
 		this.#messages = msgs;
 		return this;
 	}
