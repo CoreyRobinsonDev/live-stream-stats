@@ -4,6 +4,7 @@ import { colors } from "./util/colors";
 import { StatusCode, type User } from "./util/types";
 import { goto } from "./util/common";
 import ServerMeta from "./classes/serverMeta";
+import { DEBUG } from "..";
 
 const PORT: number = process.env.PORT 
 	? Number(process.env.PORT)
@@ -66,7 +67,14 @@ const server = Bun.serve<User>({
 							}	
 							break;
 						}
-						console.log(server.publish(req.data.channelId, JSON.stringify(msg)));
+						if (DEBUG) {
+							console.log(server.publish(req.data.channelId, JSON.stringify(msg)));
+						} else {
+							server.publish(
+								req.data.channelId, 
+								JSON.stringify(msg)
+							);
+						}
 					}
 					browser.close();
 					break;

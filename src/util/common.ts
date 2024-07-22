@@ -1,13 +1,24 @@
-import puppeteer, { Browser, Page } from "puppeteer";
+import puppeteer, { Browser, Page, type PuppeteerLaunchOptions } from "puppeteer";
+import { DEBUG } from "../..";
 
 const MAX_TIMEOUT: number = 10_000 as const;
 const USER_AGENT: string = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36" as const;
-const LAUNCH_CONFIG = {
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    defaultViewport: { width: 1980, height: 1024 },
-    slowMo: 100,
-    // headless: false
-};
+
+let LAUNCH_CONFIG: PuppeteerLaunchOptions;
+if (DEBUG) {
+    LAUNCH_CONFIG = {
+	args: ["--no-sandbox", "--disable-setuid-sandbox"],
+	defaultViewport: { width: 1980, height: 1024 },
+	slowMo: 100,
+	headless: false
+    };
+} else {
+    LAUNCH_CONFIG = {
+	args: ["--no-sandbox", "--disable-setuid-sandbox"],
+	defaultViewport: { width: 1980, height: 1024 },
+	slowMo: 100,
+    };
+}
 
 export function delay(timeInMs: number) {
     return new Promise((resolve) => {
