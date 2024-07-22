@@ -1,6 +1,6 @@
 import puppeteer, { Browser, Page, type PuppeteerLaunchOptions } from "puppeteer";
-import { DEBUG } from "../..";
 
+export const DEBUG: boolean = false;
 const MAX_TIMEOUT: number = 10_000 as const;
 const USER_AGENT: string = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36" as const;
 

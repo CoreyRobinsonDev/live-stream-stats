@@ -2,9 +2,8 @@ import Resp from "./classes/resp";
 import { chat } from "./routes/chat";
 import { colors } from "./util/colors";
 import { StatusCode, type User } from "./util/types";
-import { goto } from "./util/common";
+import { DEBUG, goto } from "./util/common";
 import ServerMeta from "./classes/serverMeta";
-import { DEBUG } from "..";
 
 const PORT: number = process.env.PORT 
 	? Number(process.env.PORT)
