@@ -43,7 +43,7 @@ const server = Bun.serve<User>({
 				case "chat":
 					const site = `https://kick.com/${req.data.streamer}/chatroom`;
 					const [browser, page] = await goto(site);
-					serverMeta.channels.get(req.data.channelId)!.addPage(page);
+					serverMeta.channels.get(req.data.channelId)?.addPage(page);
 
 					while (serverMeta.channels.has(req.data.channelId)) {
 						let [msg, err] = await chat.kick(serverMeta.channels.get(req.data.channelId)!);

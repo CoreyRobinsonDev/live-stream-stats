@@ -1,9 +1,11 @@
 export type Message = {
     id: string,
-    badges?: string[],
     username: string,
+    userColor: string[],
+    userBadges?: string[],
     text?: string,
-    emote?: string
+    emotes?: string[],
+    reply?: string,
 }
 
 export type User = {

@@ -19,25 +19,65 @@ async function kick(channel: Channel): Promise<[Message[], StatusCode | undefine
 
 	try {
 		let messagesFromSite: Message[] = await channel.page.$$eval(".chat-entry > div", (opts) => {
-			return opts.filter((opt) => opt.getElementsByClassName("chat-entry-username").item(0)?.innerHTML).map((opt) => {
-				// const username = opt.getElementsByClassName("chat-entry-username").item(0)!.innerHTML;
-				// const text = opt.getElementsByClassName("chat-entry-content").item(0)?.innerHTML;
-				const username = opt.getElementsByTagName("span").item(0)!.innerHTML;
-				const text = opt.getElementsByTagName("span").item(2)?.innerHTML;
-				const emote = opt.getElementsByTagName("span").item(3)?.innerHTML;
+			return opts.map((opt) => {
+				const chatHTML = opt.getElementsByTagName("span");	
+				let user = {
+					name: "",
+					color: "",
+				};
+				let reply: string | undefined = undefined;
+				let badges: string[] | undefined = undefined;
+				let emotes: string[] | undefined = undefined;
+				const text = opt.getElementsByClassName("chat-entry-content").item(0)?.innerHTML;
+				const emotesHTML = opt.getElementsByClassName("chat-emote-container");
 
-				const id = username.substring(0,5) + (text ? text[0] + text[text.length - 1] : 
-					emote ? emote.substring(12,14) : "");
+				user.name = chatHTML.item(0)?.getElementsByClassName("chat-entry-username").item(0)?.getAttribute("data-chat-entry-user") ?? "";
+				user.color = chatHTML.item(0)?.getElementsByClassName("chat-entry-username").item(0)?.getAttribute("style") ?? "";
+				const badgesHTML = chatHTML.item(0)?.getElementsByClassName("base-badge")
+
+				if (opt?.getElementsByClassName("chat-message-identity").item(0)?.getElementsByTagName("img").item(0)) {
+					badges = [opt!.getElementsByClassName("chat-message-identity").item(0)!.getElementsByTagName("img").item(0)!.getAttribute("src")?.replace("https://", "") ?? ""];
+				}
+
+				if (badgesHTML)
+				for (let i = 0; i < badgesHTML.length; i++) {
+					if (!badges) {
+						badges = [
+							badgesHTML.item(i)?.getElementsByTagName("div").item(0)?.innerHTML
+							.replaceAll("\"", "'")
+							.replaceAll("\n", "")
+							.replaceAll("\t", "")?? ""]; 
+					} else {
+						badges.push(
+							badgesHTML.item(i)?.getElementsByTagName("div").item(0)?.innerHTML
+							.replaceAll("\"", "'")
+							.replaceAll("\n", "")
+							.replaceAll("\t", "")?? ""); 
+					}
+				}
+
+				if (emotesHTML)
+				for (let i = 0; i < emotesHTML.length; i++) {
+					if (!emotes) { 
+						emotes = [emotesHTML.item(i)?.getElementsByTagName("img").item(0)?.getAttribute("src")?.replace("https://", "") ?? ""];
+					} else {
+						emotes.push(emotesHTML.item(i)?.getElementsByTagName("img").item(0)?.getAttribute("src")?.replace("https://", "") ?? "");
+					}
+				}
+
+				const id = (user.name.substring(0,3) + user.name[user.name.length - 1]) + (text ? text[0] + text[text.length - 1] + text[text.length / 2]: emotes ? emotes[0].substring(30,35) : "?");
+
+				let color = user.color.substring(11, user.color.length - 2);
 
 				return {
-				// badges: opt.getElementsByClassName("chat-message-identity")
-				// 	.item(0)
-				// 	?.getElementsByTagName("svg"),
-				id,
-				username,
-				text, 
-				emote, 
-			}
+					id,
+					reply,
+					username: user.name.replace("-", "_"), 
+					userColor: color.split(", "),
+					userBadges: badges,
+					text,
+					emotes
+				}
 			});
 		});
 
