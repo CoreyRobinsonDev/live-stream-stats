@@ -6,7 +6,7 @@ const LAUNCH_CONFIG = {
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
     defaultViewport: { width: 1980, height: 1024 },
     slowMo: 100,
-    headless: false
+    // headless: false
 };
 
 export function delay(timeInMs: number) {
