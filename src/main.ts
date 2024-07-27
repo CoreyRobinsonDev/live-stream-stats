@@ -2,14 +2,8 @@ import Resp from "./classes/resp";
 import { chat } from "./routes/chat";
 import { colors } from "./util/colors";
 import { StatusCode, type User } from "./util/types";
-import { DEBUG, goto } from "./util/common";
-import ServerMeta from "./classes/serverMeta";
+import { BROWSER, DEBUG, goto, PORT, serverMeta } from "./util/common";
 
-const PORT: number = process.env.PORT 
-	? Number(process.env.PORT)
-	: 8080 as const;
-
-const serverMeta = new ServerMeta();
 
 const server = Bun.serve<User>({
 	hostname: "0.0.0.0",
@@ -34,7 +28,7 @@ const server = Bun.serve<User>({
 			console.log(`${colors.yellow}${req.data.id}${colors.reset} - ${colors.bold}${req.data.channelId}${colors.reset}`);
 
 			serverMeta.addUser(req);
-			serverMeta.list();
+			if (DEBUG) serverMeta.list();
 			if (serverMeta.channels.get(req.data.channelId)!.users.length > 1) return
 
 			switch(req.data.platform) {
@@ -42,7 +36,7 @@ const server = Bun.serve<User>({
 				switch(req.data.action) {
 				case "chat":
 					const site = `https://kick.com/${req.data.streamer}/chatroom`;
-					const [browser, page] = await goto(site);
+					const [page] = await goto(BROWSER, site);
 					serverMeta.channels.get(req.data.channelId)?.addPage(page);
 
 					while (serverMeta.channels.has(req.data.channelId)) {
@@ -75,7 +69,7 @@ const server = Bun.serve<User>({
 							);
 						}
 					}
-					browser.close();
+					page.close();
 					break;
 				default:
 					serverMeta.printErr("Invalid Action");
@@ -94,10 +88,11 @@ const server = Bun.serve<User>({
 		},
 		close(req) {
 			serverMeta.removerUser(req);
-			serverMeta.list();
+			if (DEBUG) serverMeta.list();
 		}
 	}
 })
 
 
+if (DEBUG)
 console.log(`Listening on ${colors.red}${colors.bold}${server.url}${colors.reset}`);

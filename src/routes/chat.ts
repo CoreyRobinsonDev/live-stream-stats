@@ -65,7 +65,7 @@ async function kick(channel: Channel): Promise<[Message[], StatusCode | undefine
 					}
 				}
 
-				const id = (user.name.substring(0,3) + user.name[user.name.length - 1]) + (text ? text[0] + text[text.length - 1] + text[text.length / 2]: emotes ? emotes[0].substring(30,35) : "?");
+				const id = (user.name.substring(0,3) + user.name[user.name.length - 1]) + (text ? text[0] + text[text.length - 1] + text[Math.floor(text.length / 2)]: emotes ? emotes[0].substring(30,35) : "?");
 
 				let color = user.color.substring(11, user.color.length - 2);
 
